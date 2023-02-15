@@ -1,4 +1,5 @@
 import os
+import fnmatch
 
 class FileSystemIterator:
 
@@ -12,6 +13,7 @@ class FileSystemIterator:
         :param pattern:
         '''
         self.root = root
+        self._pattern = pattern
         self._create_generator(only_files, only_dirs)
 
     def __iter__(self):
@@ -23,20 +25,35 @@ class FileSystemIterator:
     def _gen_only_dirs(self):
         for addr, dirs, files in os.walk(self.root):
             for name in dirs:
-                yield os.path.join(addr, name)
+                if not self._pattern is None:
+                    if fnmatch.fnmatch(name, self._pattern):
+                        yield os.path.join(addr, name)
+                else:
+                    yield os.path.join(addr, name)
+
 
     def _gen_only_files(self):
-        for addr, dirs, files in os.walk(self.root):
-            for name in files:
-                yield os.path.join(addr, name)
+        files = next(os.walk(self.root))[2]
+        for file in files:
+            if not self._pattern is None:
+                if fnmatch.fnmatch(file, self._pattern):
+                    yield os.path.join(self.root, file)
+            else:
+                yield os.path.join(self.root, file)
 
     def _gen_all(self):
-        pass
+        for addr, dirs, files in os.walk(self.root):
+            for name in files:
+                if not self._pattern is None:
+                    if fnmatch.fnmatch(name, self._pattern):
+                        yield os.path.join(addr, name)
+                else:
+                    yield os.path.join(addr, name)
 
     def _create_generator(self, only_files, only_dirs):
-        if only_files:
+        if only_files and not only_dirs:
             self.generator = self._gen_only_files()
-        elif only_dirs:
+        elif only_dirs and not only_files:
             self.generator = self._gen_only_dirs()
         else:
             self.generator = self._gen_all()
@@ -44,11 +61,44 @@ class FileSystemIterator:
 
 
 if __name__ == '__main__':
-    root = '/home/osia/Documents/code/Python3/file_system_iter/tree'
+    root = './tree'
+
+    for item in FileSystemIterator(root, False, False, None):
+        print(item)
+
+    print('#' * 50)
+
+    for item in FileSystemIterator(root, True, False, None):
+        print(item)
+
+    print('#' * 50)
 
     for item in FileSystemIterator(root, False, True, None):
         print(item)
 
     print('#' * 50)
 
-    print(next(FileSystemIterator(root, False, True, None)))
+    for item in FileSystemIterator(root, True, True, None):
+        print(item)
+
+    print('#' * 50)
+
+    for item in FileSystemIterator(root, False, False, 'test*'):
+        print(item)
+
+    print('#' * 50)
+
+    for item in FileSystemIterator(root, True, False, 'test*'):
+        print(item)
+
+    print('#' * 50)
+
+    for item in FileSystemIterator(root, False, True, 'test*'):
+        print(item)
+
+    print('#' * 50)
+
+    for item in FileSystemIterator(root, True, True, 'test*'):
+        print(item)
+
+    print('#' * 50)
