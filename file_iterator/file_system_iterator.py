@@ -17,38 +17,30 @@ class FileSystemIterator:
         self._create_generator(only_files, only_dirs)
 
     def __iter__(self):
-        return self.generator
+        return self
 
     def __next__(self):
         return next(self.generator)
 
+    def _check_pattern(self, iterable, addres):
+        for item in iterable:
+            if not self._pattern is None:
+                if fnmatch.fnmatch(item, self._pattern):
+                    yield os.path.join(addres, item)
+            else:
+                yield os.path.join(addres, item)
+
     def _gen_only_dirs(self):
         for addr, dirs, files in os.walk(self.root):
-            for name in dirs:
-                if not self._pattern is None:
-                    if fnmatch.fnmatch(name, self._pattern):
-                        yield os.path.join(addr, name)
-                else:
-                    yield os.path.join(addr, name)
-
+            yield from self._check_pattern(dirs, addr)
 
     def _gen_only_files(self):
         files = next(os.walk(self.root))[2]
-        for file in files:
-            if not self._pattern is None:
-                if fnmatch.fnmatch(file, self._pattern):
-                    yield os.path.join(self.root, file)
-            else:
-                yield os.path.join(self.root, file)
+        yield from self._check_pattern(files, self.root)
 
     def _gen_all(self):
         for addr, dirs, files in os.walk(self.root):
-            for name in files:
-                if not self._pattern is None:
-                    if fnmatch.fnmatch(name, self._pattern):
-                        yield os.path.join(addr, name)
-                else:
-                    yield os.path.join(addr, name)
+            yield from self._check_pattern(files, addr)
 
     def _create_generator(self, only_files, only_dirs):
         if only_files and not only_dirs:
