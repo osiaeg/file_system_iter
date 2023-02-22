@@ -35,12 +35,13 @@ class FileSystemIterator:
             yield from self._check_pattern(dirs, addr)
 
     def _gen_only_files(self):
-        files = next(os.walk(self.root))[2]
-        yield from self._check_pattern(files, self.root)
+        for addr, dirs, files in os.walk(self.root):
+            yield from self._check_pattern(files, addr)
 
     def _gen_all(self):
         for addr, dirs, files in os.walk(self.root):
             yield from self._check_pattern(files, addr)
+            yield from self._check_pattern(dirs, addr)
 
     def _create_generator(self, only_files, only_dirs):
         if only_files and not only_dirs:

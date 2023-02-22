@@ -10,6 +10,8 @@ class TestFileIterator(unittest.TestCase):
         for addres, dirs, files in os.walk(self.root):
             for name in files:
                 expected_files.append(os.path.join(addres, name))
+            for directory in dirs:
+                expected_files.append(os.path.join(addres, directory))
 
         generated_files = [path for path in iterator(self.root, False, False)]
         self.assertEqual(sorted(expected_files), sorted(generated_files))
@@ -17,9 +19,9 @@ class TestFileIterator(unittest.TestCase):
     def test_only_files(self):
         expected_files = []
 
-        files = next(os.walk(self.root))[2]
-        for file in files:
-            expected_files.append(os.path.join(self.root, file))
+        for addr, dirs, files in os.walk(self.root):
+            for file in files:
+                expected_files.append(os.path.join(addr, file))
 
         generated_files = [path for path in iterator(self.root, True, False)]
         self.assertEqual(sorted(expected_files), sorted(generated_files))
@@ -54,6 +56,9 @@ class TestFileIterator(unittest.TestCase):
             for name in files:
                 if fnmatch.fnmatch(name, pattern):
                     expected_files.append(os.path.join(addres, name))
+            for directory in dirs:
+                if fnmatch.fnmatch(directory, pattern):
+                    expected_files.append(os.path.join(addres, directory))
 
         generated_files = [path for path in iterator(self.root, False, False, pattern)]
         self.assertEqual(sorted(expected_files), sorted(generated_files))
@@ -62,10 +67,10 @@ class TestFileIterator(unittest.TestCase):
         expected_files = []
         pattern = '*.csv'
 
-        files = next(os.walk(self.root))[2]
-        for file in files:
-            if fnmatch.fnmatch(file, pattern):
-                expected_files.append(os.path.join(self.root, file))
+        for addr, dirs, files in os.walk(self.root):
+            for file in files:
+                if fnmatch.fnmatch(file, pattern):
+                    expected_files.append(os.path.join(addr, file))
 
         generated_files = [path for path in iterator(self.root, True, False, pattern)]
         self.assertEqual(sorted(expected_files), sorted(generated_files))
