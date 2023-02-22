@@ -12,15 +12,15 @@ class FileSystemIterator:
         :param only_dirs:
         :param pattern:
         '''
-        self.root = root
+        self._root = root
         self._pattern = pattern
-        self._create_generator(only_files, only_dirs)
+        self._generator = self._create_generator(only_files, only_dirs)
 
     def __iter__(self):
         return self
 
     def __next__(self):
-        return next(self.generator)
+        return next(self._generator)
 
     def _check_pattern(self, iterable, addres):
         for item in iterable:
@@ -30,24 +30,13 @@ class FileSystemIterator:
             else:
                 yield os.path.join(addres, item)
 
-    def _gen_only_dirs(self):
-        for addr, dirs, files in os.walk(self.root):
-            yield from self._check_pattern(dirs, addr)
-
-    def _gen_only_files(self):
-        for addr, dirs, files in os.walk(self.root):
-            yield from self._check_pattern(files, addr)
-
-    def _gen_all(self):
-        for addr, dirs, files in os.walk(self.root):
-            yield from self._check_pattern(files, addr)
-            yield from self._check_pattern(dirs, addr)
-
     def _create_generator(self, only_files, only_dirs):
-        if only_files and not only_dirs:
-            self.generator = self._gen_only_files()
-        elif only_dirs and not only_files:
-            self.generator = self._gen_only_dirs()
-        else:
-            self.generator = self._gen_all()
+        for addr, dirs, files in os.walk(self._root):
+            if only_files and not only_dirs:
+                yield from self._check_pattern(files, addr)
+            elif only_dirs and not only_files:
+                yield from self._check_pattern(dirs, addr)
+            else:
+                yield from self._check_pattern(files, addr)
+                yield from self._check_pattern(dirs, addr)
 
